@@ -117,9 +117,9 @@ h2, h5 { color: #00d4ff; }
 
 <h5>📊 Rangos de Calidad del Agua</h5>
 
-<p><span class="legend-box verde"></span> <strong>Normal:</strong> pH (6.5 - 8.5) | Turbidez ≤ 5 NTU</p>
-<p><span class="legend-box naranja"></span> <strong>Alerta:</strong> pH (6 - 6.5 o 8.5 - 9) | Turbidez 5 - 10 NTU</p>
-<p><span class="legend-box rojo"></span> <strong>Crítico:</strong> pH &lt; 6 o &gt; 9 | Turbidez &gt; 10 NTU</p>
+<p><span class="legend-box verde"></span> <strong>Normal:</strong> pH (6.5 - 8.5) | Turbidez ≤ 5 NTU | Conductividad ≤ 1000 µS/cm</p>
+<p><span class="legend-box naranja"></span> <strong>Alerta:</strong> pH (6 - 6.5 o 8.5 - 9) | Turbidez 5 - 10 NTU | Conductividad 1000 - 2000 µS/cm</p>
+<p><span class="legend-box rojo"></span> <strong>Crítico:</strong> pH &lt; 6 o &gt; 9 | Turbidez &gt; 10 NTU | Conductividad &gt; 2000 µS/cm</p>
 
 </div>
 </div>
@@ -195,7 +195,7 @@ document.exitFullscreen();
 }
 }
 
-let ph=7.2, turbidez=5, temp=22;
+let ph=7.2, turbidez=5, conductividad=1500;
 let alarma=document.getElementById("alarmaSonido");
 
 // GRÁFICAS
@@ -224,7 +224,7 @@ y:{ title:{ display:true,text:'Turbidez (NTU)',color:'white'},ticks:{color:'whit
 });
 
 // HISTORIAL
-function guardarHistorial(ph,turbidez,temp){
+function guardarHistorial(ph,turbidez,conductividad){
 let h=JSON.parse(localStorage.getItem("historial"))||[];
 
 let fecha=new Date().toLocaleDateString();
@@ -234,7 +234,7 @@ let estado="normal";
 if(ph<6||ph>9||turbidez>10) estado="critico";
 else if(ph<6.5||ph>8.5||turbidez>5) estado="alerta";
 
-h.unshift({fecha,hora,ph,turbidez,temp,estado});
+h.unshift({fecha,hora,ph,turbidez,conductividad,estado});
 if(h.length>20)h.pop();
 
 localStorage.setItem("historial",JSON.stringify(h));
@@ -318,7 +318,7 @@ tabla.innerHTML+=`
 <td>${d.hora}</td>
 <td>${d.ph}</td>
 <td>${d.turbidez}</td>
-<td>${d.temp}</td>
+<td>${d.conductividad}</td>
 <td style="text-align: center;">${obtenerBadgeEstado(estadoPH)}</td>
 <td style="text-align: center;">${obtenerBadgeEstado(estadoTurbidez)}</td>
 <td style="text-align: center;">${obtenerBadgeEstado(d.estado)}</td>
@@ -331,12 +331,12 @@ function agregarNuevaMedida(){
 // Generar nuevos valores aleatorios
 ph=(6+Math.random()*3).toFixed(2);
 turbidez=(Math.random()*12).toFixed(1);
-temp=(Math.random()*200).toFixed(1);
+conductividad=(Math.random()*200).toFixed(1);
 
 // Actualizar tarjetas
 document.getElementById("ph").innerText=ph;
 document.getElementById("turbidez").innerText=turbidez+" NTU";
-document.getElementById("conductividad").innerText=temp+" µS/cm";
+document.getElementById("conductividad").innerText=conductividad+" µS/cm";
 
 // Determinar estado
 let estado="Normal",alarmaOn=false;
@@ -349,7 +349,7 @@ document.getElementById("estado").innerText=estado;
 actualizarAlertas(ph,turbidez);
 
 // Guardar en historial
-guardarHistorial(ph,turbidez,temp);
+guardarHistorial(ph,turbidez,conductividad);
 
 // Reproducir alarma si es crítico
 if(alarmaOn)alarma.play();
@@ -387,7 +387,7 @@ let h=JSON.parse(localStorage.getItem("historial"))||[];
 
 let html=`<table border="1">
 <tr>
-<th>Fecha</th><th>Hora</th><th>pH</th><th>Turbidez</th><th>Temp</th><th>Estado pH</th><th>Estado Turbidez</th><th>Estado General</th>
+<th>Fecha</th><th>Hora</th><th>pH</th><th>Turbidez</th><th>Conductividad</th><th>Estado pH</th><th>Estado Turbidez</th><th>Estado General</th>
 </tr>`;
 
 h.forEach(d=>{
@@ -403,7 +403,7 @@ html+=`<tr style="background:${color}">
 <td>${d.hora}</td>
 <td>${d.ph}</td>
 <td>${d.turbidez}</td>
-<td>${d.temp}</td>
+<td>${d.conductividad}</td>
 <td>${estadoPH}</td>
 <td>${estadoTurbidez}</td>
 <td>${d.estado}</td>
@@ -426,11 +426,11 @@ setInterval(()=>{
 
 ph=(6+Math.random()*3).toFixed(2);
 turbidez=(Math.random()*12).toFixed(1);
-temp=(20+Math.random()*10).toFixed(1);
+conductividad=(Math.random()*200).toFixed(1);
 
 document.getElementById("ph").innerText=ph;
 document.getElementById("turbidez").innerText=turbidez+" NTU";
-document.getElementById("conductividad").innerText=temp+" µS/cm";
+document.getElementById("conductividad").innerText=conductividad+" µS/cm";
 
 let estado="Normal",alarmaOn=false;
 
@@ -460,7 +460,7 @@ graficaTurbidez.data.datasets[0].data.shift();
 graficaPH.update();
 graficaTurbidez.update();
 
-guardarHistorial(ph,turbidez,temp);
+guardarHistorial(ph,turbidez,conductividad);
 
 },4000);
 
