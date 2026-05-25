@@ -105,8 +105,9 @@ h2, h5 { color: #00d4ff; }
 
 <!-- ALERTAS -->
 <div class="row mt-4">
-<div class="col-md-6"><div id="alertaPH" class="alert alert-success text-center">pH normal</div></div>
-<div class="col-md-6"><div id="alertaTurbidez" class="alert alert-success text-center">Turbidez normal</div></div>
+<div class="col-md-4"><div id="alertaPH" class="alert alert-success text-center">pH normal</div></div>
+<div class="col-md-4"><div id="alertaTurbidez" class="alert alert-success text-center">Turbidez normal</div></div>
+<div class="col-md-4"><div id="alertaConductividad" class="alert alert-success text-center">Conductividad normal</div></div>
 </div>
 
 <!-- LEYENDA -->
@@ -128,14 +129,19 @@ h2, h5 { color: #00d4ff; }
 
 <!-- GRÁFICAS -->
 <div class="row mt-4">
-<div class="col-md-6"><div class="card"><div class="card-body">
+<div class="col-md-4"><div class="card"><div class="card-body">
 <h5 class="text-center">Mediciones pH</h5>
 <canvas id="graficaPH"></canvas>
 </div></div></div>
 
-<div class="col-md-6"><div class="card"><div class="card-body">
+<div class="col-md-4"><div class="card"><div class="card-body">
 <h5 class="text-center">Mediciones Turbidez</h5>
 <canvas id="graficaTurbidez"></canvas>
+</div></div></div>
+
+<div class="col-md-4"><div class="card"><div class="card-body">
+<h5 class="text-center">Mediciones Conductividad</h5>
+<canvas id="graficaConductividad"></canvas>
 </div></div></div>
 </div>
 
@@ -178,7 +184,7 @@ h2, h5 { color: #00d4ff; }
 </div>
 
 <div class="footer">
-© 2026 - Sistema IoT de Monitoreo de Calidad del Agua | Proyecto de ingeniería 1 Grupo_94 Estudiantes de Ingeniería
+© 2026 - Sistema IoT de Monitoreo de Calidad del Agua | Microprocesadores y Microcontroladores Grupo_28 Estudiantes de Ingeniería
 </div>
 
 <audio id="alarmaSonido">
@@ -223,6 +229,18 @@ y:{ title:{ display:true,text:'Turbidez (NTU)',color:'white'},ticks:{color:'whit
 }
 });
 
+const graficaConductividad=new Chart(document.getElementById('graficaConductividad'),{
+type:'line',
+data:{labels:[],datasets:[{label:'Conductividad (µS/cm)',data:[],borderColor:'#ffc107',backgroundColor:'rgba(255,193,7,0.1)'}]},
+options:{
+plugins:{ legend:{ labels:{ color:'white'} } },
+scales:{
+x:{ title:{ display:true,text:'Hora',color:'white'},ticks:{color:'white'} },
+y:{ title:{ display:true,text:'Conductividad (µS/cm)',color:'white'},ticks:{color:'white'} }
+}
+}
+});
+
 // HISTORIAL
 function guardarHistorial(ph,turbidez,conductividad){
 let h=JSON.parse(localStorage.getItem("historial"))||[];
@@ -253,15 +271,22 @@ if(turbidez>5) return "alerta";
 return "normal";
 }
 
+function obtenerEstadoConductividad(conductividad){
+if(conductividad>2000) return "critico";
+if(conductividad>1000) return "alerta";
+return "normal";
+}
+
 function obtenerBadgeEstado(estado){
 if(estado==="critico") return '<span class="badge bg-danger">⚠️ Crítico</span>';
 if(estado==="alerta") return '<span class="badge bg-warning text-dark">⚡ Alerta</span>';
 return '<span class="badge bg-success">✓ Normal</span>';
 }
 
-function actualizarAlertas(phValue, turbidezValue){
+function actualizarAlertas(phValue, turbidezValue, conductividadValue){
 let estadoPH=obtenerEstadoPH(parseFloat(phValue));
 let estadoTurbidez=obtenerEstadoTurbidez(parseFloat(turbidezValue));
+let estadoConductividad=obtenerEstadoConductividad(parseFloat(conductividadValue));
 
 // Actualizar alerta pH
 let alertaPH=document.getElementById("alertaPH");
@@ -300,6 +325,25 @@ textoAlertaTurbidez="✓ Turbidez Normal - Agua clara";
 claseTurbidez+=" text-center";
 alertaTurbidez.className=claseTurbidez;
 alertaTurbidez.innerText=textoAlertaTurbidez;
+
+// Actualizar alerta Conductividad
+let alertaConductividad=document.getElementById("alertaConductividad");
+let claseConductividad="alert ";
+let textoAlertaConductividad="";
+
+if(estadoConductividad==="critico"){
+claseConductividad+="alert-danger";
+textoAlertaConductividad="⚠️ Conductividad Crítica - Nivel muy alto";
+}else if(estadoConductividad==="alerta"){
+claseConductividad+="alert-warning";
+textoAlertaConductividad="⚡ Conductividad en Alerta - Nivel elevado";
+}else{
+claseConductividad+="alert-success";
+textoAlertaConductividad="✓ Conductividad Normal - Nivel óptimo";
+}
+claseConductividad+=" text-center";
+alertaConductividad.className=claseConductividad;
+alertaConductividad.innerText=textoAlertaConductividad;
 }
 
 function mostrarHistorial(){
@@ -346,7 +390,7 @@ else if(ph<6.5||ph>8.5||turbidez>5){estado="Alerta";}
 document.getElementById("estado").innerText=estado;
 
 // Actualizar alertas
-actualizarAlertas(ph,turbidez);
+actualizarAlertas(ph,turbidez,conductividad);
 
 // Guardar en historial
 guardarHistorial(ph,turbidez,conductividad);
@@ -360,16 +404,21 @@ graficaPH.data.labels.push(t);
 graficaPH.data.datasets[0].data.push(ph);
 graficaTurbidez.data.labels.push(t);
 graficaTurbidez.data.datasets[0].data.push(turbidez);
+graficaConductividad.data.labels.push(t);
+graficaConductividad.data.datasets[0].data.push(conductividad);
 
 if(graficaPH.data.labels.length>10){
 graficaPH.data.labels.shift();
 graficaPH.data.datasets[0].data.shift();
 graficaTurbidez.data.labels.shift();
 graficaTurbidez.data.datasets[0].data.shift();
+graficaConductividad.data.labels.shift();
+graficaConductividad.data.datasets[0].data.shift();
 }
 
 graficaPH.update();
 graficaTurbidez.update();
+graficaConductividad.update();
 }
 
 // LIMPIAR REGISTROS
@@ -438,7 +487,7 @@ if(ph<6||ph>9||turbidez>10){estado="Crítico";alarmaOn=true;}
 else if(ph<6.5||ph>8.5||turbidez>5){estado="Alerta";}
 
 document.getElementById("estado").innerText=estado;
-actualizarAlertas(ph,turbidez);
+actualizarAlertas(ph,turbidez,conductividad);
 
 if(alarmaOn)alarma.play();
 
@@ -450,22 +499,28 @@ graficaPH.data.datasets[0].data.push(ph);
 graficaTurbidez.data.labels.push(t);
 graficaTurbidez.data.datasets[0].data.push(turbidez);
 
+graficaConductividad.data.labels.push(t);
+graficaConductividad.data.datasets[0].data.push(conductividad);
+
 if(graficaPH.data.labels.length>10){
 graficaPH.data.labels.shift();
 graficaPH.data.datasets[0].data.shift();
 graficaTurbidez.data.labels.shift();
 graficaTurbidez.data.datasets[0].data.shift();
+graficaConductividad.data.labels.shift();
+graficaConductividad.data.datasets[0].data.shift();
 }
 
 graficaPH.update();
 graficaTurbidez.update();
+graficaConductividad.update();
 
 guardarHistorial(ph,turbidez,conductividad);
 
 },4000);
 
 mostrarHistorial();
-actualizarAlertas(ph,turbidez);
+actualizarAlertas(ph,turbidez,conductividad);
 
 </script>
 
